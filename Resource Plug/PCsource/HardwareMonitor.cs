@@ -1,9 +1,9 @@
 ﻿using OpenHardwareMonitor.Hardware;
 using System.Collections.Generic;
 
-namespace Resource_Plug {
+namespace Resource_Plug.PCsource {
 
-    class PCsource {
+    class HardwareMonitor {
         private readonly Computer _computer;
         private ISensor[] _cpu;
         private ISensor[] _ram;
@@ -19,7 +19,7 @@ namespace Resource_Plug {
             return resSensor.ToArray();
         }
 
-        public PCsource() {
+        public HardwareMonitor() {
 
             _computer = new Computer() {
                 CPUEnabled = true,

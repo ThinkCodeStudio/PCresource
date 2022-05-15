@@ -1,20 +1,17 @@
-﻿using System;
+﻿using OpenHardwareMonitor.Hardware;
+using Resource_Plug.PCsource;
+using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
+using System.IO.Ports;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using OpenHardwareMonitor.Hardware;
-using System.IO.Ports;
 
 namespace Resource_Plug {
     public partial class mainWindow : Form {
 
         private SerialPort _port;
-        private PCsource _PCsource;
+        private HardwareMonitor _hardwareMonitor;
 
         public mainWindow() {
             InitializeComponent();
@@ -39,7 +36,7 @@ namespace Resource_Plug {
                 ShowComToolStripMenuItem1.Text = "NULL";
                 ConnectToolStripMenuItem.Enabled = false;
             }
-            _PCsource = new PCsource();
+            _hardwareMonitor = new HardwareMonitor();
         }
 
         //托盘右键关闭,退出程序
@@ -91,18 +88,18 @@ namespace Resource_Plug {
         }
         //定时器
         private void timer1_Tick(object sender, EventArgs e) {
-            _PCsource.Updata();
+            _hardwareMonitor.Updata();
             List<byte> buff = new List<byte>();
-            buff.Add(Convert.ToByte(PCsource.GetBtyeFromSensor(_PCsource.CPULoad, "CPU Total").Value));
-            buff.Add(Convert.ToByte(PCsource.GetBtyeFromSensor(_PCsource.CPUTemperature, "CPU Package").Value));
-            buff.Add(Convert.ToByte(PCsource.GetBtyeFromSensor(_PCsource.CPUPower, "CPU Package").Value));
+            buff.Add(Convert.ToByte(HardwareMonitor.GetBtyeFromSensor(_hardwareMonitor.CPULoad, "CPU Total").Value));
+            buff.Add(Convert.ToByte(HardwareMonitor.GetBtyeFromSensor(_hardwareMonitor.CPUTemperature, "CPU Package").Value));
+            buff.Add(Convert.ToByte(HardwareMonitor.GetBtyeFromSensor(_hardwareMonitor.CPUPower, "CPU Package").Value));
 
-            buff.Add(Convert.ToByte(PCsource.GetBtyeFromSensor(_PCsource.RAMLoad, "Memory").Value));
-            buff.Add(Convert.ToByte(PCsource.GetBtyeFromSensor(_PCsource.RAMData, "Used Memory").Value));
+            buff.Add(Convert.ToByte(HardwareMonitor.GetBtyeFromSensor(_hardwareMonitor.RAMLoad, "Memory").Value));
+            buff.Add(Convert.ToByte(HardwareMonitor.GetBtyeFromSensor(_hardwareMonitor.RAMData, "Used Memory").Value));
 
-            buff.Add(Convert.ToByte(PCsource.GetBtyeFromSensor(_PCsource.GPULoad, "GPU Core").Value));
-            buff.Add(Convert.ToByte(PCsource.GetBtyeFromSensor(_PCsource.GPUTemperature, "GPU Core").Value));
-            buff.Add(Convert.ToByte(PCsource.GetBtyeFromSensor(_PCsource.GPUPower, "GPU Power").Value));
+            buff.Add(Convert.ToByte(HardwareMonitor.GetBtyeFromSensor(_hardwareMonitor.GPULoad, "GPU Core").Value));
+            buff.Add(Convert.ToByte(HardwareMonitor.GetBtyeFromSensor(_hardwareMonitor.GPUTemperature, "GPU Core").Value));
+            buff.Add(Convert.ToByte(HardwareMonitor.GetBtyeFromSensor(_hardwareMonitor.GPUPower, "GPU Power").Value));
 
             byte[] modbusBuff = Modbus.GetBytes(buff.ToArray());
             _port.Write(modbusBuff, 0, modbusBuff.Length);
@@ -115,17 +112,17 @@ namespace Resource_Plug {
                 }
                 addDataRowToGridView("Modbus data", sb.ToString());
 
-                addSensorToGridView(_PCsource.CPULoad);
-                addSensorToGridView(_PCsource.CPUTemperature);
-                addSensorToGridView(_PCsource.CPUPower);
+                addSensorToGridView(_hardwareMonitor.CPULoad);
+                addSensorToGridView(_hardwareMonitor.CPUTemperature);
+                addSensorToGridView(_hardwareMonitor.CPUPower);
 
-                addSensorToGridView(_PCsource.RAMLoad);
-                addSensorToGridView(_PCsource.RAMData);
+                addSensorToGridView(_hardwareMonitor.RAMLoad);
+                addSensorToGridView(_hardwareMonitor.RAMData);
 
-                addSensorToGridView(_PCsource.GPULoad);
-                addSensorToGridView(_PCsource.GPUTemperature);
-                addSensorToGridView(_PCsource.GPUPower);
-                addSensorToGridView(_PCsource.GPUData);
+                addSensorToGridView(_hardwareMonitor.GPULoad);
+                addSensorToGridView(_hardwareMonitor.GPUTemperature);
+                addSensorToGridView(_hardwareMonitor.GPUPower);
+                addSensorToGridView(_hardwareMonitor.GPUData);
             }
         }
 
