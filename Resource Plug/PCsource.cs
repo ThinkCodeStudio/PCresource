@@ -51,6 +51,15 @@ namespace Resource_Plug {
             }
         }
 
+        public static float? GetBtyeFromSensor(ISensor[] sensors, string name) {
+            foreach (var iten in sensors) {
+                if (iten.Name.Equals(name)) {
+                    return iten.Value;
+                }
+            }
+            return null;
+        }
+
         public ISensor[] CPULoad {
             get {
                 return getSensorValue( _cpu, SensorType.Load );
