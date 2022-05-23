@@ -81,6 +81,7 @@
       <DependentUpon>Form1.cs</DependentUpon>
     </Compile>
     <Compile Include="Modbus.cs" />
+    <Compile Include="PCsource\NetworkAdapter.cs" />
     <Compile Include="PCsource\NetworkMonitor.cs" />
     <Compile Include="PCsource\HardwareMonitor.cs" />
     <Compile Include="Program.cs" />

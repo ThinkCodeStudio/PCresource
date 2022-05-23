@@ -11,6 +11,7 @@ namespace Resource_Plug {
     public partial class mainWindow : Form {
 
         private SerialPort _port;
+        private NetworkMonitor _networkMonitor;
         private HardwareMonitor _hardwareMonitor;
 
         public mainWindow() {
@@ -37,6 +38,8 @@ namespace Resource_Plug {
                 ConnectToolStripMenuItem.Enabled = false;
             }
             _hardwareMonitor = new HardwareMonitor();
+            _networkMonitor = new NetworkMonitor();
+            _networkMonitor.Reset(1);
         }
 
         //托盘右键关闭,退出程序
@@ -69,6 +72,8 @@ namespace Resource_Plug {
             }
         }
 
+
+
         private void addDataRowToGridView(object name, object value) {
             DataGridViewRow row = new DataGridViewRow();
             DataGridViewTextBoxCell callName = new DataGridViewTextBoxCell();
@@ -88,29 +93,40 @@ namespace Resource_Plug {
         }
         //定时器
         private void timer1_Tick(object sender, EventArgs e) {
+            _networkMonitor.Update();
             _hardwareMonitor.Updata();
             List<byte> buff = new List<byte>();
-            buff.Add(Convert.ToByte(HardwareMonitor.GetBtyeFromSensor(_hardwareMonitor.CPULoad, "CPU Total").Value));
-            buff.Add(Convert.ToByte(HardwareMonitor.GetBtyeFromSensor(_hardwareMonitor.CPUTemperature, "CPU Package").Value));
-            buff.Add(Convert.ToByte(HardwareMonitor.GetBtyeFromSensor(_hardwareMonitor.CPUPower, "CPU Package").Value));
+            buff.Add(Convert.ToByte(HardwareMonitor.GetValueFromSensor(_hardwareMonitor.CPULoad, "CPU Total").Value));
+            buff.Add(Convert.ToByte(HardwareMonitor.GetValueFromSensor(_hardwareMonitor.CPUTemperature, "CPU Package").Value));
+            buff.Add(Convert.ToByte(HardwareMonitor.GetValueFromSensor(_hardwareMonitor.CPUPower, "CPU Package").Value));
 
-            buff.Add(Convert.ToByte(HardwareMonitor.GetBtyeFromSensor(_hardwareMonitor.RAMLoad, "Memory").Value));
-            buff.Add(Convert.ToByte(HardwareMonitor.GetBtyeFromSensor(_hardwareMonitor.RAMData, "Used Memory").Value));
+            buff.Add(Convert.ToByte(HardwareMonitor.GetValueFromSensor(_hardwareMonitor.RAMLoad, "Memory").Value));
+            buff.Add(Convert.ToByte(HardwareMonitor.GetValueFromSensor(_hardwareMonitor.RAMData, "Used Memory").Value));
 
-            buff.Add(Convert.ToByte(HardwareMonitor.GetBtyeFromSensor(_hardwareMonitor.GPULoad, "GPU Core").Value));
-            buff.Add(Convert.ToByte(HardwareMonitor.GetBtyeFromSensor(_hardwareMonitor.GPUTemperature, "GPU Core").Value));
-            buff.Add(Convert.ToByte(HardwareMonitor.GetBtyeFromSensor(_hardwareMonitor.GPUPower, "GPU Power").Value));
+            buff.Add(Convert.ToByte(HardwareMonitor.GetValueFromSensor(_hardwareMonitor.GPULoad, "GPU Core").Value));
+            buff.Add(Convert.ToByte(HardwareMonitor.GetValueFromSensor(_hardwareMonitor.GPULoad, "GPU Memory").Value));
+            buff.Add(Convert.ToByte(HardwareMonitor.GetValueFromSensor(_hardwareMonitor.GPUTemperature, "GPU Core").Value));
+            buff.Add(Convert.ToByte(HardwareMonitor.GetValueFromSensor(_hardwareMonitor.GPUPower, "GPU Power").Value));
 
-            byte[] modbusBuff = Modbus.GetBytes(buff.ToArray());
+            // 8bit
+            foreach (byte b in BitConverter.GetBytes(_networkMonitor.DownloadSpeed)) {
+                buff.Add(b);
+            }
+            // 8bit
+            foreach (byte b in BitConverter.GetBytes(_networkMonitor.UploadSpeed)) {
+                buff.Add(b);
+            }
+
+            byte[] modbusBuff = Modbus.GetData(buff.ToArray());
             _port.Write(modbusBuff, 0, modbusBuff.Length);
 
             if (this.WindowState == FormWindowState.Normal) {
                 dataGridView1.Rows.Clear();
                 StringBuilder sb = new StringBuilder();
                 foreach (var b in modbusBuff) {
-                    sb.Append(b.ToString("X2")+" ");
+                    sb.Append(b.ToString("X2") + " ");
                 }
-                addDataRowToGridView("Modbus data", sb.ToString());
+                addDataRowToGridView($"Modbus data, count:{modbusBuff.Length}", sb.ToString());
 
                 addSensorToGridView(_hardwareMonitor.CPULoad);
                 addSensorToGridView(_hardwareMonitor.CPUTemperature);
@@ -123,6 +139,8 @@ namespace Resource_Plug {
                 addSensorToGridView(_hardwareMonitor.GPUTemperature);
                 addSensorToGridView(_hardwareMonitor.GPUPower);
                 addSensorToGridView(_hardwareMonitor.GPUData);
+                addDataRowToGridView($"Network Upload:{_networkMonitor.Name}", _networkMonitor.UploadSpeedKbps);
+                addDataRowToGridView($"Network Download:{_networkMonitor.Name}", _networkMonitor.DownloadSpeedKbps);
             }
         }
 

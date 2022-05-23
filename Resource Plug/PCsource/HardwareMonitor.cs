@@ -51,7 +51,14 @@ namespace Resource_Plug.PCsource {
             }
         }
 
-        public static float? GetBtyeFromSensor(ISensor[] sensors, string name) {
+        public static float? GetValueFromSensor(ISensor[] sensors, int index) {
+            if(index < sensors.Length) {
+                return sensors[index].Value;
+            }
+            return null;
+        }
+
+        public static float? GetValueFromSensor(ISensor[] sensors, string name) {
             foreach (var iten in sensors) {
                 if (iten.Name.Equals(name)) {
                     return iten.Value;

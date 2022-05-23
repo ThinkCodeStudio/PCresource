@@ -1,78 +1,84 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Generic;
+using System.Diagnostics;
 /// <summary>
 /// from https://www.cnblogs.com/ZmissW/articles/13691068.html
 /// </summary>
 namespace Resource_Plug.PCsource {
     internal class NetworkMonitor {
-        internal NetworkMonitor(string name) {
-            this.name = name;
+
+
+
+        List<NetworkAdapter> adapters = new List<NetworkAdapter>();
+        NetworkAdapter networkAdapter = null;
+        public NetworkMonitor() {
+            PerformanceCounterCategory category = new PerformanceCounterCategory("Network Interface");
+
+            foreach (string name in category.GetInstanceNames()) {
+                //This one exists on every computer.
+                if (name == "MS TCP Loopback interface" || name.Contains("isatap") || name.Contains("Interface"))
+                    continue;
+                //Create an instance of NetworkAdapter class, and create performance counters for it.
+                NetworkAdapter adapter = new NetworkAdapter(name);
+                adapter.dlCounter = new PerformanceCounter("Network Interface", "Bytes Received/sec", name);
+                adapter.ulCounter = new PerformanceCounter("Network Interface", "Bytes Sent/sec", name);
+                this.adapters.Add(adapter); // Add it to ArrayList adapter  
+            }
+
+            Reset(0);
         }
 
-        private long dlSpeed, ulSpeed;       // Download/Upload speed in bytes per second.  
-        private long dlValue, ulValue;       // Download/Upload counter value in bytes.  
-        private long dlValueOld, ulValueOld; // Download/Upload counter value one second earlier, in bytes.  
-
-        internal string name;                               // The name of the adapter.  
-        internal PerformanceCounter dlCounter, ulCounter;   // Performance counters to monitor download and upload speed.  
-        /// <summary>  
-        /// Preparations for monitoring.  
-        /// </summary>  
-        internal void init() {
-            // Since dlValueOld and ulValueOld are used in method refresh() to calculate network speed, they must have be initialized.  
-            this.dlValueOld = this.dlCounter.NextSample().RawValue;
-            this.ulValueOld = this.ulCounter.NextSample().RawValue;
-        }
-        /// <summary>  
-        /// Obtain new sample from performance counters, and refresh the values saved in dlSpeed, ulSpeed, etc.  
-        /// This method is supposed to be called only in NetworkMonitor, one time every second.  
-        /// </summary>  
-        internal void refresh() {
-            this.dlValue = this.dlCounter.NextSample().RawValue;
-            this.ulValue = this.ulCounter.NextSample().RawValue;
-
-            // Calculates download and upload speed.  
-            this.dlSpeed = this.dlValue - this.dlValueOld;
-            this.ulSpeed = this.ulValue - this.ulValueOld;
-
-            this.dlValueOld = this.dlValue;
-            this.ulValueOld = this.ulValue;
-        }
-        /// <summary>  
-        /// Overrides method to return the name of the adapter.  
-        /// </summary>  
-        /// <returns>The name of the adapter.</returns>  
-        public override string ToString() {
-            return this.name;
-        }
-        /// <summary>  
-        /// The name of the network adapter.  
-        /// </summary>  
         public string Name {
-            get { return this.name; }
+            get => networkAdapter?.Name;
         }
-        /// <summary>  
-        /// Current download speed in bytes per second.  
-        /// </summary>  
+
+        public int Count {
+            get => adapters.Count;
+        }
+
         public long DownloadSpeed {
-            get { return this.dlSpeed; }
+            get => networkAdapter.DownloadSpeed;
         }
-        /// <summary>  
-        /// Current upload speed in bytes per second.  
-        /// </summary>  
+
         public long UploadSpeed {
-            get { return this.ulSpeed; }
+            get => networkAdapter.UploadSpeed;
         }
-        /// <summary>  
-        /// Current download speed in kbytes per second.  
-        /// </summary>  
-        public double DownloadSpeedKbps {
-            get { return this.dlSpeed / 1024.0; }
-        }
-        /// <summary>  
-        /// Current upload speed in kbytes per second.  
-        /// </summary>  
+
         public double UploadSpeedKbps {
-            get { return this.ulSpeed / 1024.0; }
+            get => networkAdapter.UploadSpeedKbps;
         }
+
+        public double DownloadSpeedKbps {
+            get => networkAdapter.DownloadSpeedKbps;
+        }
+
+        public string[] Names() {
+            List<string> names = new List<string>();
+            foreach (NetworkAdapter adapter in adapters) {
+                names.Add(adapter.Name);
+            }
+            return names.ToArray();
+        }
+
+        public void Update() {
+            if (networkAdapter != null) {
+                networkAdapter.refresh();
+            }
+        }
+
+        public void Reset(int index) {
+            if (index < Count) {
+                networkAdapter = adapters[index];
+            }
+        }
+
+        public void Reset(string name) {
+            foreach (NetworkAdapter adapter in adapters) {
+                if (adapter.Name.Equals(name)) {
+                    networkAdapter = adapter;
+                    break;
+                }
+            }
+        }
+
     }
 }

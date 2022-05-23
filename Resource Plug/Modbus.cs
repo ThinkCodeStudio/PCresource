@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Resource_Plug {
     static class Modbus {
-        public static byte[] GetBytes(byte[] buff) {
+        public static byte[] GetData(byte[] buff) {
             if (buff.Length > byte.MaxValue) {
                 throw new Exception("size of modbus data is too long");
             }
@@ -14,9 +14,8 @@ namespace Resource_Plug {
             //add drvice
             bytes[0] = 0xA1;
             bytes[1] = 0x00;
-            //nell flag
-            bytes[2] = 0x00;
             //sensor data conut
+            bytes[2] = 0x00;
             bytes[3] = 0xFF;
             //display direction
             bytes[4] = 0x00;
